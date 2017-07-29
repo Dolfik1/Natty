@@ -4,7 +4,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <VersionPrefix>0.0.1</VersionPrefix>
-    <VersionSuffix>alpha</VersionSuffix>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.2.*" />
