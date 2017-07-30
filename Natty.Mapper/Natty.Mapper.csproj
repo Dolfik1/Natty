@@ -2,9 +2,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup>
-    <VersionPrefix>0.0.1</VersionPrefix>
-  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.2.*" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="1.1.2" />

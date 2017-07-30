@@ -9,15 +9,11 @@ open System.Text.RegularExpressions
 open System.Reflection
 open FSharp.Reflection
 
-(* TODO
 
-IEnumerable support with $
-Ignore case in properties and fields
-Id attribute support
-Custom value converters
-Optional types from database
-Tuples support
-*)
+// Natty.Mapper deps
+open Microsoft.Extensions.Caching.Memory
+open System.Collections
+open System.Diagnostics
 
 [<AttributeUsage(AttributeTargets.Field ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
 type Id() = inherit Attribute()
