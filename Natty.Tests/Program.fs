@@ -14,7 +14,7 @@ let insertTests =
       let id = 
         sqlQueryf
           "insert into Persons values (NULL, %s, %O, %s)" 
-          person.FirstName (box person.MiddleName) person.LastName
+          person.FirstName person.MiddleName person.LastName
           |> executeInsert
 
       Expect.equal id 1L "Inserted id must equal 1"
