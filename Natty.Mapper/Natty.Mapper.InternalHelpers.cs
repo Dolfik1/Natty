@@ -31,6 +31,7 @@
 */
 
 using System;
+using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -336,7 +337,8 @@ namespace Natty
 
             private static object GetOptionValue(object value, Type type)
             {
-                if (!IsOption(type)) return value;
+                if (value == null || !IsOption(type)) return value;
+                if (value == DBNull.Value) return null;
                 return Activator.CreateInstance(type, value);
             }
 

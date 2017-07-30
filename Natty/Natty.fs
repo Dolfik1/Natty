@@ -75,8 +75,11 @@ let execute (conn: IDbConnection) config (query: SqlQuery<'a>): seq<'a> =
         query.Parameters.Value
         |> Seq.iter (fun (name, value) -> 
             let param = command.CreateParameter()
+            
             param.ParameterName <- name
-            param.Value <- getParamValue value
+            let v = getParamValue value
+            param.Value <- if isNull v then (box DBNull.Value) else v
+
             command.Parameters.Add(param) |> ignore)
 
     let tp = typedefof<'a>

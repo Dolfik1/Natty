@@ -19,6 +19,16 @@ let insertTests =
 
       Expect.equal id 1L "Inserted id must equal 1"
     }
+    test "Insert Nikola Tesla" {
+      let person = nikolaTeslaPerson
+      let id = 
+        sqlQuery
+          "insert into Persons values (NULL, @firstName, @middleName, @lastName)" 
+          (Some [ "firstName", box person.FirstName; "middleName", box person.MiddleName; "lastName", box person.LastName ])
+          |> executeInsert
+
+      Expect.equal id 2L "Inserted id must equal 2"
+    }
     test "Insert Leslie Nielsen quotes" {
       let insertQuote text personId = 
         sqlQuery 
@@ -33,7 +43,6 @@ let insertTests =
       let quote2 = leslieNielsenQuote2
       let id2 = insertQuote quote2.Text quote2.PersonId
       Expect.equal id2 quote2.QuoteId "Inserted id must equal 2"
-        
     }]
 
 let tests =
@@ -71,6 +80,11 @@ let tests =
       match person with
       | Some x -> failtest "Default person must be None"
       | None -> ()
+    }
+    test "Get record with None/null" {
+      let person = nikolaTeslaPerson
+      let dbPerson: Person = sqlQueryf "select * from Persons where FirstName = %s and LastName = %s" person.FirstName person.LastName |> executeSingle
+      Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
     }
   ]
 

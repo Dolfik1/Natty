@@ -24,9 +24,16 @@ and [<CLIMutable>] Person =
       Quotes: PersonQuote seq }
 let leslieNielsenPerson =  
   { Id = 1L;
-    FirstName = "Leslie"; 
-    MiddleName = Some "William"; 
-    LastName = "Nielsen"; 
+    FirstName = "Leslie"
+    MiddleName = Some "William"
+    LastName = "Nielsen"
+    Quotes = [] }
+
+let nikolaTeslaPerson =
+  { Id = 2L;
+    FirstName = "Nikola"
+    MiddleName = None
+    LastName = "Tesla"
     Quotes = [] }
 
 let leslieNielsenQuote = 
