@@ -12,15 +12,18 @@ let insertTests =
     test "Insert Leslie Nielsen" {
       let person = leslieNielsenPerson
       let id = 
-        sqlQuery<int64> 
-          "insert into Persons values (NULL, @FirstName, @MiddleName, @LastName)" 
-          (Some [ "FirstName", box person.FirstName; "LastName", box person.LastName; "MiddleName", box person.MiddleName ]) 
+        sqlQueryf
+          "insert into Persons values (NULL, %s, %O, %s)" 
+          person.FirstName (box person.MiddleName) person.LastName
           |> executeInsert
 
       Expect.equal id 1L "Inserted id must equal 1"
     }
     test "Insert Leslie Nielsen quotes" {
-      let insertQuote text personId = sqlQueryf "insert into PersonQuotes values (NULL, %s, %i)" text personId |> executeInsert
+      let insertQuote text personId = 
+        sqlQuery 
+          "insert into PersonQuotes values (NULL, @text, @personId)"
+          (Some [ "text", text; "personId", personId ]) |> executeInsert
       
       let quote = leslieNielsenQuote
 
@@ -60,6 +63,14 @@ let tests =
 
       
       Expect.equal person dbPerson "Local person and db person must equals"
+    }
+    test "Get no records" {
+      let person: Person option = sqlQueryf "select * from Persons where Id = 999" |> executeSingleOrDefault
+
+      Expect.equal person None "Default person must equal None"
+      match person with
+      | Some x -> failtest "Default person must be None"
+      | None -> ()
     }
   ]
 
