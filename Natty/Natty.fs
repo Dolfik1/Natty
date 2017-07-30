@@ -121,26 +121,18 @@ let private printfFormatProc (worker: string * obj list -> 'd) (query: PrintfFor
     if not (FSharpType.IsFunction typeof<'a>) then 
         unbox (worker (query.Value, [])) 
     else 
-        let rec getFlattenedFunctionElements (functionType: Type) = 
-            let domain, range = FSharpType.GetFunctionElements functionType 
-            if not (FSharpType.IsFunction range) 
-                then domain::[range] 
-                else domain::getFlattenedFunctionElements(range) 
-        let types = getFlattenedFunctionElements typeof<'a> 
-        let rec proc (types: Type list) (values: obj list) (a: obj) : obj = 
-            let values = a::values 
-            match types with 
-            | [x;_] -> 
-                let result = worker (query.Value, List.rev values) 
-                box result 
-            | x::y::z::xs -> 
-                let cont = proc (y::z::xs) values 
-                let ft = FSharpType.MakeFunctionType(y,z) 
-                let cont = FSharpValue.MakeFunction(ft, cont) 
+        let rec proc (functionType: Type) (values: obj list) (a: obj) : obj =
+            let values = a::values
+            let domain, range = FSharpType.GetFunctionElements functionType
+            if not (FSharpType.IsFunction range) then
+                let result = worker (query.Value, List.rev values)
+                box result
+            else
+                let impl = proc range values
+                let cont = FSharpValue.MakeFunction(range, impl)
                 box cont 
-            | _ -> failwith "shouldn't happen" 
-        let handler = proc types [] 
-        unbox (FSharpValue.MakeFunction(typeof<'a>, handler))
+        let handler = proc typeof<'a> [] 
+        unbox (FSharpValue.MakeFunction(typeof<'a>, handler)) 
 
 let private sqlProcessor<'x> (sql: string, values: obj list) : SqlQuery<'x> =
     let stripFormatting s =
