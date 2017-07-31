@@ -5,4 +5,4 @@ dist: trusty
 install:
   - dotnet restore
 script:
-  - dotnet run Natty.Tests/Natty.Tests.fsproj
+  - dotnet run --project Natty.Tests/Natty.Tests.fsproj

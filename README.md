@@ -1,3 +1,5 @@
+![Travis build status](https://travis-ci.org/Dolfik1/Natty.svg?branch=master)
+[![NuGet](https://img.shields.io/nuget/v/Natty.svg)](https://www.nuget.org/packages/Natty/)
 # Natty
 Fast and Functional ORM for F#
 
