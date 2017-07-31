@@ -1,6 +1,6 @@
 ﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFrameworks>net451;netstandard1.6</TargetFrameworks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <PropertyGroup>
@@ -12,17 +12,21 @@
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.2.*"  />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="System.Data.Common" Version="4.3.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.3.1" />
 
     <!-- The following dependencies need for Natty.Mapper.dll -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="1.1.2" />
+  </ItemGroup>
+
+  <!-- The following dependencies need for Natty.Mapper.dll -->
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.6'">
     <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.TraceSource" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Reflection.TypeExtensions" Version="4.3.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.3.1" />
+    <PackageReference Include="System.Data.Common" Version="4.3.0" />
   </ItemGroup>
-  
+
   <!-- Keep "hidden" Natty.Mapper reference in NuGet package  -->
   <ItemGroup>
     <ProjectReference Include="../Natty.Mapper/Natty.Mapper.csproj">

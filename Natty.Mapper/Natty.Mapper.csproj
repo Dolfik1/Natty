@@ -1,14 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFrameworks>net451;netstandard1.6</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.2.*" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="1.1.2" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.6'">
     <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.TraceSource" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Reflection.TypeExtensions" Version="4.3.0" />
     <PackageReference Include="System.Data.Common" Version="4.3.0" />
   </ItemGroup>
+
 </Project>
