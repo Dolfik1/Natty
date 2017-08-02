@@ -37,9 +37,13 @@
   
   <!-- Copy Natty.Mapper.dll to nuget package -->
   <ItemGroup>
-    <_PackageFiles Include="$(OutputPath)\Natty.Mapper.dll">
+    <_PackageFiles Include="$(OutputPath)\netstandard1.6\Natty.Mapper.dll">
       <BuildAction>None</BuildAction>
       <PackagePath>lib\netstandard1.6\</PackagePath>
+    </_PackageFiles>
+    <_PackageFiles Include="$(OutputPath)\net451\Natty.Mapper.dll">
+      <BuildAction>None</BuildAction>
+      <PackagePath>lib\net451\</PackagePath>
     </_PackageFiles>
   </ItemGroup>
 </Project>
