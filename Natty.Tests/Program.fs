@@ -86,6 +86,13 @@ let tests =
       let dbPerson: Person = sqlQueryf "select * from Persons where FirstName = %s and LastName = %s" person.FirstName person.LastName |> executeSingle
       Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
     }
+    test "Composable Query" {
+      let person = nikolaTeslaPerson
+      let condition = sqlQueryf "FirstName = %s and LastName = %s" person.FirstName person.LastName
+      let dbPerson: Person = sqlQueryf "select * from Persons where %O" condition |> executeSingle
+
+      Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
+    }
   ]
 
 [<EntryPoint>]
