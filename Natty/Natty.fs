@@ -137,7 +137,7 @@ let rec private getProcessedSql (idx: int ref) (sql : string) (values : obj list
 
         let item = values.[!localIdx]
 
-        let tp = item.GetType()
+        let tp = if (isNull item) |> not then item.GetType() else null
         if tp = typeof<SqlQuery<_>> then
 
             let queryText = tp.GetProperty("QueryTextRaw").GetValue(item) :?> string

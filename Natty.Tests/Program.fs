@@ -39,7 +39,6 @@ let insertTests =
 
       let id = insertQuote quote.Text quote.PersonId
       Expect.equal id quote.QuoteId "Inserted id must equal 1"
-
       let quote2 = leslieNielsenQuote2
       let id2 = insertQuote quote2.Text quote2.PersonId
       Expect.equal id2 quote2.QuoteId "Inserted id must equal 2"
@@ -92,6 +91,12 @@ let tests =
       let dbPerson: Person = sqlQueryf "select * from Persons where %O" condition |> executeSingle
 
       Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
+    }
+    test "Check null argument in query" {
+      let person = { nikolaTeslaPerson with Quotes = null }
+      let dbPerson: Person = sqlQueryf "select * from Persons where Id = %i and MiddleName IS %O" person.Id null |> executeSingle
+
+      Expect.equal person dbPerson "Local person and db person must equals"
     }
   ]
 
