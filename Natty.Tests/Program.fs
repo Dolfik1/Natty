@@ -1,5 +1,4 @@
-﻿open System
-open Expecto
+﻿open Expecto
 
 open Natty.Tests.Init
 open Natty.Tests.Types
@@ -29,6 +28,18 @@ let insertTests =
 
       Expect.equal id 2L "Inserted id must equal 2"
     }
+    (*
+    test "Insert Nikola Tesla with anonymous record" {
+      let person = nikolaTeslaPerson
+      let id = 
+        sqlQuery
+          "insert into Persons values (NULL, @firstName, @middleName, @lastName)" 
+          (Some {| firstName = person.FirstName; middleName = person.MiddleName; lastName = person.LastName |})
+           |> executeInsert
+ 
+       Expect.equal id 2L "Inserted id must equal 2"
+    |}
+    *)
     test "Insert Leslie Nielsen quotes" {
       let insertQuote text personId = 
         sqlQuery 
@@ -92,7 +103,7 @@ let tests =
 
       Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
     }
-    test "Check null argument in query" {
+    ftest "Check null argument in query" {
       let person = { nikolaTeslaPerson with Quotes = null }
       let dbPerson: Person = sqlQueryf "select * from Persons where Id = %i and MiddleName IS %O" person.Id null |> executeSingle
 
@@ -102,10 +113,10 @@ let tests =
 
 [<EntryPoint>]
 let main argv =
-    init()
+  init()
 
-    let insertConfig = { Expecto.Tests.defaultConfig with ``parallel`` = false }
+  let insertConfig = { Expecto.Tests.defaultConfig with runInParallel = false }
 
-    Tests.runTestsWithArgs insertConfig argv insertTests |> ignore
-    Tests.runTestsWithArgs Expecto.Tests.defaultConfig argv tests |> ignore
-    0 // return an integer exit code
+  Tests.runTestsWithArgs insertConfig argv insertTests |> ignore
+  Tests.runTestsWithArgs Expecto.Tests.defaultConfig argv tests |> ignore
+  0 // return an integer exit code

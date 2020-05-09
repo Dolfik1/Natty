@@ -7,8 +7,6 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Natty", "Natty/Natty.fsproj
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Natty.Tests", "Natty.Tests/Natty.Tests.fsproj", "{7288E1DD-8639-4648-89B0-4E3320639CAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Natty.Mapper", "Natty.Mapper/Natty.Mapper.csproj", "{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,17 +44,5 @@ Global
 		{7288E1DD-8639-4648-89B0-4E3320639CAC}.Release|x64.Build.0 = Release|x64
 		{7288E1DD-8639-4648-89B0-4E3320639CAC}.Release|x86.ActiveCfg = Release|x86
 		{7288E1DD-8639-4648-89B0-4E3320639CAC}.Release|x86.Build.0 = Release|x86
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Debug|x64.ActiveCfg = Debug|x64
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Debug|x64.Build.0 = Debug|x64
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Debug|x86.ActiveCfg = Debug|x86
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Debug|x86.Build.0 = Debug|x86
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Release|x64.ActiveCfg = Release|x64
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Release|x64.Build.0 = Release|x64
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Release|x86.ActiveCfg = Release|x86
-		{A8053468-23FC-4844-A1AF-8A3F9F5CC4B5}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 EndGlobal
