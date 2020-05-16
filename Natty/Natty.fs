@@ -1,48 +1,92 @@
 module Natty.Data
 
 open System
-open System.Collections.Generic
 open System.Data
+open System.Linq.Expressions
+open System.Collections.Concurrent
 open System.Text.RegularExpressions
 open System.Reflection
 open FSharp.Reflection
 
+type ISqlQuery =
+  abstract QueryTextRaw : string
+  abstract QueryText : string
+  abstract Parameters : obj[]
+
 [<Struct>]
 type SqlQuery<'a> = 
-  { QueryText : string
-    QueryTextRaw : string
-    Parameters : (string * obj) list option }
+  { QueryText: string
+    QueryTextRaw: string
+    Parameters: obj[] }
+  interface ISqlQuery with
+    member x.QueryText = x.QueryText
+    member x.QueryTextRaw = x.QueryTextRaw
+    member x.Parameters = x.Parameters
+  
+let paramReaders = ConcurrentDictionary<Type, Action<IDbCommand, obj>>()
 
-let private getParamValue value = 
-  if isNull value then null
-  else
-    if Helpers.isOption (value.GetType()) then 
-      let _, fields = FSharpValue.GetUnionFields(value, value.GetType())
-      if fields.Length = 0 then null else fields.[0]
-    else value
+let private createParamReader tp =
+  let par = Expression.Parameter(typeof<obj>)
+  let commandPar = Expression.Parameter(typeof<IDbCommand>)
+  
+  let unboxed = Expression.Convert(par, tp)
+  let expressions =
+    seq {
+      yield! tp.GetFields() |> Seq.map (fun x -> x :> MemberInfo, x.FieldType)
+      yield! tp.GetProperties() |> Seq.map (fun x -> x :> MemberInfo, x.PropertyType)
+    }
+    |> Seq.map (fun (mi, tp) ->
+      let method =
+        if Helpers.isOption tp then
+          let tp = tp.GetGenericArguments().[0]
+          Helpers.addParameterOptionMethodInfo
+            .MakeGenericMethod(tp)
+        else
+          Helpers.addParameterMethodInfo
+            .MakeGenericMethod(tp)
+      
+      Expression.Call(
+        method,
+        commandPar,
+        Expression.Constant(mi.Name),
+        Expression.PropertyOrField(unboxed, mi.Name)) :> Expression)
+    
+  let block = Expression.Block(expressions)
+  Expression.Lambda<Action<IDbCommand, obj>>(block, commandPar, par).Compile()
 
+let private getOrCreateParamReader tp =
+  paramReaders.GetOrAdd(tp, createParamReader tp)
+  
 let execute (conn : IDbConnection) mapFn (query : SqlQuery<'a>) : seq<'a> = 
   if conn.State = ConnectionState.Closed 
      || conn.State = ConnectionState.Broken then conn.Open()
   use command = conn.CreateCommand()
   command.CommandText <- query.QueryText
-  if query.Parameters.IsSome then 
-    query.Parameters.Value
-    |> Seq.iter (
-      fun (name, value) -> 
-      let param = command.CreateParameter()
-      param.ParameterName <- name
-      let v = getParamValue value
-      param.Value <- if isNull v then (box DBNull.Value) else v
-      command.Parameters.Add(param) |> ignore)
+  
+  let idx = ref 0
+  
+  for param in query.Parameters do
+    let tp = lazy(param.GetType())
+    if param = null then
+      Helpers.addParameter command (sprintf "p%i" !idx) (box DBNull.Value)
+      incr idx
+    else if Helpers.canBeInlineParameter tp.Value then
+      Helpers.addParameter command (sprintf "p%i" !idx) param
+      incr idx
+    else if Helpers.isInlineOption tp.Value then
+      Helpers.addParameter command (sprintf "p%i" !idx) (Helpers.unboxOptionToDb param)
+      incr idx
+    else
+      let reader = getOrCreateParamReader tp.Value
+      reader.Invoke(command, param)
+    
   let tp = typedefof<'a>
-  let tpinfo = tp.GetTypeInfo()
   if tp = typedefof<unit> then 
     command.ExecuteNonQuery() |> ignore
     Seq.empty
-  else if tpinfo.IsPrimitive || tp = typedefof<string> then 
+  else if tp.IsPrimitive || tp = typedefof<string> then 
     let v = command.ExecuteScalar() :?> 'a
-    [ v ] |> List.toSeq
+    [ v ] |> Seq.ofList
   else 
     use reader = command.ExecuteReader()
     mapFn reader
@@ -60,11 +104,11 @@ let executeSingleAsync conn config query =
 let executeSingleOrDefaultAsync conn config query = 
   async { return executeSingleOrDefault conn config query }
 
-let sqlQuery<'a> queryText parameters : SqlQuery<'a> = 
+let inline sqlQuery<'a, 'p> queryText (param: 'p option) : SqlQuery<'a> = 
   { QueryText = queryText
     /// "Raw" string from sqlQueryf
     QueryTextRaw = queryText
-    Parameters = parameters }
+    Parameters = if param.IsSome then [| box param.Value |] else [||] }
 
 let private printfFormatProc (worker : string * obj list -> 'd) 
   (query : PrintfFormat<'a, _, _, 'd>) : 'a = 
@@ -85,42 +129,28 @@ let private printfFormatProc (worker : string * obj list -> 'd)
     let handler = proc typeof<'a> []
     unbox (FSharpValue.MakeFunction(typeof<'a>, handler))
 
-let rec private getProcessedSql (idx: int ref) (sql : string) (values : obj list) = 
+let rec private getProcessedSql (idx: int ref) (sql: string) (values: obj[]) (resultValues: ResizeArray<obj>) = 
   let localIdx = ref 0
-
-  let items = List<obj>()
-  let values = values |> List.toArray
-
+  
   let eval (_ : Match) = 
     let item = values.[!localIdx]
-    let tp = if (isNull item) |> not then item.GetType() else null
-    if tp = typeof<SqlQuery<_>> then
-      let queryText = tp.GetProperty("QueryTextRaw").GetValue(item) :?> string
-      let parameters = tp.GetProperty("Parameters").GetValue(item) :?> (string * obj) list option
-            
-      let sqlQuery, vals = 
-        match parameters with
-        | Some parameters -> getProcessedSql idx queryText (parameters |> List.map (fun (_, x) -> x))
-        | None -> queryText, []
-
-      items.AddRange (vals)
-      incr localIdx
-
-      sqlQuery
-    else 
-      items.Add(item)
-
+    incr localIdx
+    
+    match item with
+    | :? ISqlQuery as q ->
+      getProcessedSql idx q.QueryTextRaw q.Parameters resultValues
+    | _ ->
+      resultValues.Add(item)
       incr idx
-      incr localIdx
-      sprintf "@p%d" !idx
+      sprintf "@p%i" !idx
 
   let sql = Regex.Replace(sql, "%.", eval)
-  (sql, (items |> Seq.toList))
+  sql
 
-let private sqlProcessor<'x> (sqlRaw : string, values : obj list) : SqlQuery<'x> = 
+let private sqlProcessor (sqlRaw : string, values : obj list) : SqlQuery<'a> = 
   let idx = ref -1
-  let sql, vals = getProcessedSql idx sqlRaw values
-  let vals = vals |> List.mapi (fun i x -> (sprintf "@p%i" i), x)
-  { QueryText = sql; QueryTextRaw = sqlRaw; Parameters = (Some vals) }: SqlQuery<'x>
+  let resultValues = ResizeArray<obj>()
+  let sql = getProcessedSql idx sqlRaw (values |> Array.ofList) resultValues
+  { QueryText = sql; QueryTextRaw = sqlRaw; Parameters = resultValues |> Array.ofSeq }: SqlQuery<'a>
 
 let sqlQueryf a = printfFormatProc sqlProcessor a

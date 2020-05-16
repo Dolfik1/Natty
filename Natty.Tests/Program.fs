@@ -24,28 +24,17 @@ let insertTests =
       let id = 
         sqlQuery
           "insert into Persons values (NULL, @firstName, @middleName, @lastName)" 
-          (Some [ "firstName", box person.FirstName; "middleName", box person.MiddleName; "lastName", box person.LastName ])
-          |> executeInsert
-
-      Expect.equal id 2L "Inserted id must equal 2"
-    }
-    (*
-    test "Insert Nikola Tesla with anonymous record" {
-      let person = nikolaTeslaPerson
-      let id = 
-        sqlQuery
-          "insert into Persons values (NULL, @firstName, @middleName, @lastName)" 
           (Some {| firstName = person.FirstName; middleName = person.MiddleName; lastName = person.LastName |})
            |> executeInsert
  
-       Expect.equal id 2L "Inserted id must equal 2"
+      Expect.equal id 2L "Inserted id must equal 2"
     }
-    *)
+    
     test "Insert Leslie Nielsen quotes" {
       let insertQuote text personId = 
         sqlQuery 
           "insert into PersonQuotes values (NULL, @text, @personId)"
-          (Some [ "text", text; "personId", personId ]) |> executeInsert
+          (Some {| text = text; personId = personId |}) |> executeInsert
       
       let quote = leslieNielsenQuote
 
