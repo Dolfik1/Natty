@@ -5,12 +5,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="..\Natty\Helpers.fs" Link="Helpers.fs" />
         <Compile Include="OptionConverter.fs" />
         <Compile Include="Mappy.fs" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Mappy" Version="1.0.3" />
+      <PackageReference Include="Mappy" Version="1.0.5" />
     </ItemGroup>
 
 </Project>

@@ -13,49 +13,15 @@ type SqlQuery<'a> =
     QueryTextRaw : string
     Parameters : (string * obj) list option }
 
-type NattyConfig = 
-  { Delimiter : char
-    DefaultIdName : string
-    IgnoreCase : bool }
-
-let defaultConfig = 
-  { Delimiter = '_'
-    DefaultIdName = "Id"
-    IgnoreCase = false }
-
-let private mappyOptions =
-  let options = MappyOptions()
-  options.AddConverter(OptionConverter())
-  options
-let private mappy = Mappy(mappyOptions)
-
 let private getParamValue value = 
   if isNull value then null
   else
-    if isOption (value.GetType()) then 
+    if Helpers.isOption (value.GetType()) then 
       let _, fields = FSharpValue.GetUnionFields(value, value.GetType())
       if fields.Length = 0 then null else fields.[0]
     else value
 
-let private getFieldsNames _ (reader : IDataReader) = 
-  seq { 
-    for i in 0..reader.FieldCount - 1 do
-      yield reader.GetName(i)
-  }
-  |> Seq.toArray
-
-let private readRows (reader : IDataReader) (fieldsNames : string []) : IDictionary<string, obj> seq = 
-  seq { 
-    while reader.Read() do
-      let values = Array.zeroCreate<obj> reader.FieldCount
-      reader.GetValues(values) |> ignore
-      let dic = Dictionary<string, obj>()
-      for i in 0..reader.FieldCount - 1 do
-        dic.Add(fieldsNames.[i], values.[i])
-      yield dic :> IDictionary<string, obj>
-  }
-
-let execute (conn : IDbConnection) config (query : SqlQuery<'a>) : seq<'a> = 
+let execute (conn : IDbConnection) mapFn (query : SqlQuery<'a>) : seq<'a> = 
   if conn.State = ConnectionState.Closed 
      || conn.State = ConnectionState.Broken then conn.Open()
   use command = conn.CreateCommand()
@@ -79,16 +45,18 @@ let execute (conn : IDbConnection) config (query : SqlQuery<'a>) : seq<'a> =
     [ v ] |> List.toSeq
   else 
     use reader = command.ExecuteReader()
-    let fieldsNames = getFieldsNames config reader
-    let rows = readRows reader fieldsNames
-    mappy.Map<'a>(rows)
+    mapFn reader
 
 let executeSingle conn config query = execute conn config query |> Seq.head
+
 let executeSingleOrDefault conn config query = 
   execute conn config query |> Seq.tryHead
+
 let executeAsync conn config query = async { return execute conn config query }
+
 let executeSingleAsync conn config query = 
   async { return executeSingle conn config query }
+
 let executeSingleOrDefaultAsync conn config query = 
   async { return executeSingleOrDefault conn config query }
 

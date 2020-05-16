@@ -3,7 +3,7 @@ module Natty.Tests.Types
 open Mappy
 
 type PersonQuoteTag =
-  { Id: int64
+  { [<Id>] Id: int64
     PersonQuoteId: int64
     Tag: string
     PersonQuote: PersonQuote }
@@ -14,12 +14,13 @@ and PersonQuote =
     Person: Person option
     Tags: PersonQuoteTag seq }
 and Person =
-  { Id: int64
+  { [<Id>] Id: int64
     FirstName: string
     MiddleName: string option
     LastName: string 
       // BithdayDate: DateTime
     Quotes: PersonQuote seq }
+
 let leslieNielsenPerson =  
   { Id = 1L;
     FirstName = "Leslie"

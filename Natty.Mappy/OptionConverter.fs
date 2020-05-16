@@ -1,13 +1,9 @@
-module internal Natty.Mappy.Converters
+module internal Converters
 
 open System
 open System.Linq.Expressions
 open System.Collections.Concurrent
 open Mappy.Converters
-
-let isOption (t: System.Type) = 
-  t.IsGenericType 
-    && t.GetGenericTypeDefinition() = typedefof<Option<_>>
 
 let generateExpression<'t> =
   let value = Expression.Parameter(typedefof<obj>)
@@ -25,7 +21,7 @@ type OptionConverter() =
   interface ITypeConverter with
     member x.Order = -1
     member x.CanConvert<'t>(_) =
-      isOption (typedefof<'t>)
+      Helpers.isOption (typedefof<'t>)
      
     member x.Convert<'a>(value) =
       if isNull value |> not && value <> box DBNull.Value then
