@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="OptionConverter.fs" />
+        <Compile Include="Mappy.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Mappy" Version="1.0.3" />
+    </ItemGroup>
+
+</Project>
