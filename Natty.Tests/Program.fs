@@ -18,6 +18,7 @@ let insertTests =
 
       Expect.equal id 1L "Inserted id must equal 1"
     }
+
     test "Insert Nikola Tesla" {
       let person = nikolaTeslaPerson
       let id = 
@@ -38,7 +39,7 @@ let insertTests =
            |> executeInsert
  
        Expect.equal id 2L "Inserted id must equal 2"
-    |}
+    }
     *)
     test "Insert Leslie Nielsen quotes" {
       let insertQuote text personId = 
@@ -53,7 +54,8 @@ let insertTests =
       let quote2 = leslieNielsenQuote2
       let id2 = insertQuote quote2.Text quote2.PersonId
       Expect.equal id2 quote2.QuoteId "Inserted id must equal 2"
-    }]
+    }
+  ]
 
 let tests =
   testList "" [
@@ -63,8 +65,8 @@ let tests =
 
       Expect.equal person dbPerson "Local person and db person must equals"
     }
+    
     test "Get Leslie Nielsen person by Id with Quotes" {
-
       let person = { leslieNielsenPerson with Quotes = [ leslieNielsenQuote; leslieNielsenQuote2 ] }
       let dbPerson = 
         sqlQueryf
@@ -80,9 +82,9 @@ let tests =
 
       let dbPerson = { dbPerson with Quotes = dbPerson.Quotes |> Seq.toList }
 
-      
-      Expect.equal person dbPerson "Local person and db person must equals"
+      Expect.equal dbPerson person "Local person and db person must equals"
     }
+    
     test "Get no records" {
       let person: Person option = sqlQueryf "select * from Persons where Id = 999" |> executeSingleOrDefault
 
@@ -91,11 +93,13 @@ let tests =
       | Some x -> failtest "Default person must be None"
       | None -> ()
     }
+    
     test "Get record with None/null" {
       let person = nikolaTeslaPerson
       let dbPerson: Person = sqlQueryf "select * from Persons where FirstName = %s and LastName = %s" person.FirstName person.LastName |> executeSingle
       Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
     }
+    
     test "Composable Query" {
       let person = nikolaTeslaPerson
       let condition = sqlQueryf "FirstName = %s and LastName = %s" person.FirstName person.LastName
@@ -103,7 +107,8 @@ let tests =
 
       Expect.equal { person with Id = dbPerson.Id } { dbPerson with Quotes = [] } "Local Nikola Tesla person and db person must equals"
     }
-    ftest "Check null argument in query" {
+    
+    test "Check null argument in query" {
       let person = { nikolaTeslaPerson with Quotes = null }
       let dbPerson: Person = sqlQueryf "select * from Persons where Id = %i and MiddleName IS %O" person.Id null |> executeSingle
 
@@ -119,4 +124,4 @@ let main argv =
 
   Tests.runTestsWithArgs insertConfig argv insertTests |> ignore
   Tests.runTestsWithArgs Expecto.Tests.defaultConfig argv tests |> ignore
-  0 // return an integer exit code
+  0

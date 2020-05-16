@@ -2,19 +2,18 @@ module Natty.Tests.Types
 
 open Mappy
 
-[<CLIMutable>]
 type PersonQuoteTag =
   { Id: int64
     PersonQuoteId: int64
     Tag: string
     PersonQuote: PersonQuote }
-and [<CLIMutable>] PersonQuote =
+and PersonQuote =
   { [<Id>] QuoteId: int64
     Text: string
     PersonId: int64
     Person: Person option
     Tags: PersonQuoteTag seq }
-and [<CLIMutable>] Person =
+and Person =
   { Id: int64
     FirstName: string
     MiddleName: string option

@@ -17,7 +17,6 @@
     <PackageReference Include="sqlite" Version="3.13.0" />
     <PackageReference Include="System.Data.Common" Version="4.3.0" />
   </ItemGroup>
-
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
   </ItemGroup>

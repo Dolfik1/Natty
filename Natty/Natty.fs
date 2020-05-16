@@ -6,8 +6,6 @@ open System.Data
 open System.Text.RegularExpressions
 open System.Reflection
 open FSharp.Reflection
-open Mappy
-open Natty.Converters
 
 [<Struct>]
 type SqlQuery<'a> = 
@@ -25,13 +23,16 @@ let defaultConfig =
     DefaultIdName = "Id"
     IgnoreCase = false }
 
-let private mappy = Mappy(MappyOptions(converters = [ OptionConverter() ]))
+let private mappyOptions =
+  let options = MappyOptions()
+  options.AddConverter(OptionConverter())
+  options
+let private mappy = Mappy(mappyOptions)
 
 let private getParamValue value = 
   if isNull value then null
-  else 
-    let tp = value.GetType()
-    if isOption tp then 
+  else
+    if isOption (value.GetType()) then 
       let _, fields = FSharpValue.GetUnionFields(value, value.GetType())
       if fields.Length = 0 then null else fields.[0]
     else value

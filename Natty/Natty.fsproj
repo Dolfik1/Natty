@@ -7,11 +7,9 @@
     <VersionPrefix>0.1.0</VersionPrefix>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="OptionConverter.fs" />
     <Compile Include="Natty.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.7.1" />
-    <PackageReference Include="Mappy" Version="1.0.3" />
   </ItemGroup>
 </Project>
