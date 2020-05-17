@@ -19,12 +19,12 @@ let insertTests =
       Expect.equal id 1L "Inserted id must equal 1"
     }
 
-    test "Insert Nikola Tesla" {
+    ftest "Insert Nikola Tesla" {
       let person = nikolaTeslaPerson
       let id = 
         sqlQuery
-          "insert into Persons values (NULL, @firstName, @middleName, @lastName)" 
-          (Some {| firstName = person.FirstName; middleName = person.MiddleName; lastName = person.LastName |})
+          "insert into Persons values (NULL, @FirstName, @MiddleName, @LastName)" 
+          (Some person)
            |> executeInsert
  
       Expect.equal id 2L "Inserted id must equal 2"

@@ -23,11 +23,12 @@ type SqlQuery<'a> =
     member x.QueryTextRaw = x.QueryTextRaw
     member x.Parameters = x.Parameters
   
-let paramReaders = ConcurrentDictionary<Type, Action<IDbCommand, obj>>()
+let private paramReaders = ConcurrentDictionary<Type, Action<IDbCommand, Set<string>, obj>>()
 
 let private createParamReader tp =
-  let par = Expression.Parameter(typeof<obj>)
   let commandPar = Expression.Parameter(typeof<IDbCommand>)
+  let variablesPar = Expression.Parameter(typeof<Set<string>>)
+  let par = Expression.Parameter(typeof<obj>)
   
   let unboxed = Expression.Convert(par, tp)
   let expressions =
@@ -48,40 +49,81 @@ let private createParamReader tp =
       Expression.Call(
         method,
         commandPar,
+        variablesPar,
         Expression.Constant(mi.Name),
         Expression.PropertyOrField(unboxed, mi.Name)) :> Expression)
     
   let block = Expression.Block(expressions)
-  Expression.Lambda<Action<IDbCommand, obj>>(block, commandPar, par).Compile()
+  Expression.Lambda<Action<IDbCommand, Set<string>, obj>>(block, commandPar, variablesPar, par).Compile()
 
 let private getOrCreateParamReader tp =
   paramReaders.GetOrAdd(tp, createParamReader tp)
   
-let execute (conn : IDbConnection) mapFn (query : SqlQuery<'a>) : seq<'a> = 
-  if conn.State = ConnectionState.Closed 
-     || conn.State = ConnectionState.Broken then conn.Open()
-  use command = conn.CreateCommand()
+let queryToCommand (query: SqlQuery<'a>) (command: IDbCommand) =
   command.CommandText <- query.QueryText
   
   let idx = ref 0
   
-  for param in query.Parameters do
-    let tp = lazy(param.GetType())
-    if param = null then
-      Helpers.addParameter command (sprintf "p%i" !idx) (box DBNull.Value)
-      incr idx
-    else if Helpers.canBeInlineParameter tp.Value then
-      Helpers.addParameter command (sprintf "p%i" !idx) param
-      incr idx
-    else if Helpers.isInlineOption tp.Value then
-      Helpers.addParameter command (sprintf "p%i" !idx) (Helpers.unboxOptionToDb param)
-      incr idx
+  let maxVariables = query.QueryText |> Seq.sumBy (fun x -> if x = '@' then 1 else 0)
+  let variables =
+    if maxVariables > 0 then
+      let queryText = query.QueryText
+
+      let mutable startIndex = -1
+      seq {
+        let idx = ref -1
+        for c in query.QueryText do
+          incr idx
+          match c, startIndex with
+          | '@', _ -> 
+            startIndex <- !idx + 1
+          | _, -1 -> ()
+          | _ when c <> '_' && Char.IsLetterOrDigit(c) |> not ->
+            yield queryText.Substring(startIndex, !idx - startIndex)
+            startIndex <- -1
+          | _ -> ()
+
+        if startIndex > 0 then
+          yield queryText.Substring(startIndex)
+      } |> Set.ofSeq
     else
+      Set.empty
+
+  let rec readParam (param: obj) =
+    let tp = lazy(param.GetType())
+    match param with
+    | _ when Object.ReferenceEquals(param, null) ->
+      Helpers.addParameter command variables (sprintf "p%i" !idx) (box DBNull.Value)
+      incr idx
+
+    | _ when Helpers.canBeInlineParameter tp.Value ->
+      Helpers.addParameter command variables (sprintf "p%i" !idx) param
+      incr idx
+
+    | _ when Helpers.isInlineOption tp.Value ->
+      Helpers.addParameter command variables (sprintf "p%i" !idx) (Helpers.unboxOptionToDb param)
+      incr idx
+
+    | :? (string * obj) as arg ->
+      Helpers.addParameter command variables (fst arg) (snd arg)
+
+    | :? System.Collections.Generic.IEnumerable<(string * obj)> as seq ->
+      seq |> Seq.iter readParam
+
+    | _ ->
       let reader = getOrCreateParamReader tp.Value
-      reader.Invoke(command, param)
-    
-  let tp = typedefof<'a>
-  if tp = typedefof<unit> then 
+      reader.Invoke(command, variables, param)
+
+  query.Parameters |> Seq.iter readParam
+  command
+
+let execute (conn: IDbConnection) mapFn (query: SqlQuery<'a>) : seq<'a> = 
+  if conn.State = ConnectionState.Closed 
+     || conn.State = ConnectionState.Broken then conn.Open()
+  use command = conn.CreateCommand() |> queryToCommand query
+  
+  let tp = typeof<'a>
+  if tp = typeof<unit> then 
     command.ExecuteNonQuery() |> ignore
     Seq.empty
   else if tp.IsPrimitive || tp = typedefof<string> then 

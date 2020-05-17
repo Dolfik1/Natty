@@ -21,27 +21,32 @@ let unboxOptionToDb obj =
   then box DBNull.Value
   else fields.[0]
   
-
+  
+#if !MAPPY
+  
 let getMethodInfo name =
   Assembly.GetExecutingAssembly()
     .GetType("Helpers").GetMethod(name, BindingFlags.NonPublic ||| BindingFlags.Static)
  
 [<ReflectedDefinition>]
-let addParameter (command: IDbCommand) name value =
-  let param = command.CreateParameter()
-  param.ParameterName <- name
-  param.Value <- value
-  command.Parameters.Add(param) |> ignore
+let addParameter (command: IDbCommand) (variables: Set<string>) (name: string) value =
+  if variables |> Set.contains name then
+    let param = command.CreateParameter()
+    param.ParameterName <- name
+    param.Value <- value
+    command.Parameters.Add(param) |> ignore
 
 let addParameterMethodInfo =
   getMethodInfo "addParameter"
   
 [<ReflectedDefinition>]
-let addParameterOption (command: IDbCommand) name (value: 'a option) =
+let addParameterOption (command: IDbCommand) (variables: Set<string>) (name: string) (value: 'a option) =
   match value with
   | Some p ->
-    addParameter command name p
+    addParameter command variables name p
   | _ ->
-    addParameter command name DBNull.Value
+    addParameter command variables name DBNull.Value
 let addParameterOptionMethodInfo =
   getMethodInfo "addParameterOption"
+
+#endif
