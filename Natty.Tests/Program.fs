@@ -19,7 +19,7 @@ let insertTests =
       Expect.equal id 1L "Inserted id must equal 1"
     }
 
-    ftest "Insert Nikola Tesla" {
+    test "Insert Nikola Tesla" {
       let person = nikolaTeslaPerson
       let id = 
         sqlQuery
@@ -51,6 +51,13 @@ let tests =
     test "Get Leslie Nielsen person by Id" {
       let person = { leslieNielsenPerson with Quotes = null }
       let dbPerson: Person = sqlQueryf "select * from Persons where Id = %i" person.Id |> executeSingle
+
+      Expect.equal person dbPerson "Local person and db person must equals"
+    }
+
+    test "Get Leslie Nielsen person by Id with variable defined in list of tuples" {
+      let person = { leslieNielsenPerson with Quotes = null }
+      let dbPerson: Person = sqlQuery "select * from Persons where Id = @id" (Some [ "id", box person.Id ]) |> executeSingle
 
       Expect.equal person dbPerson "Local person and db person must equals"
     }
