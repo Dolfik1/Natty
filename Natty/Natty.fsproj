@@ -4,7 +4,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>1.0.1</VersionPrefix>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Helpers.fs" />
@@ -12,6 +12,5 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.7.1" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
 </Project>
