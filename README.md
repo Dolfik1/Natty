@@ -66,7 +66,7 @@ If you need to use named parameters for any reason, you can do this like this:
 ```F#
 sqlQuery
     "insert into Persons values (NULL, @firstName, @middleName, @lastName)" 
-    (Some [ "firstName", box person.FirstName; "middleName", box person.MiddleName; "lastName", box person.LastName ])
+    (Some {| firstName = person.FirstName; middleName = person.MiddleName; lastName = person.LastName ]})
     |> executeSingle<unit>
 ```
 But this do not necessary, because formatted queries (`sqlQueryf`) automatically do it.
